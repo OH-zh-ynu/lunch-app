@@ -2,6 +2,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── API CONFIGURATION ───
     const API_KEY = 'f15b7ad9efab6381';
 
+    // ─── Shared dual-proxy fetch helper ───
+    async function fetchViaProxy(targetUrl) {
+        const proxies = [
+            `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`
+        ];
+        for (const proxyUrl of proxies) {
+            try {
+                const response = await fetch(proxyUrl);
+                if (!response.ok) continue;
+                const text = await response.text();
+                if (text.length > 10) return text;
+            } catch (e) {
+                continue;
+            }
+        }
+        throw new Error('All proxies failed for: ' + targetUrl);
+    }
+
     // ─── DOM ELEMENTS ───
     const navBtns = document.querySelectorAll('.nav-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -175,9 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Background fetch for mapping inputs to area codes
     async function prefetchMajorAreas() {
         try {
-            const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://webservice.recruit.co.jp/hotpepper/large_area/v1/?key=${API_KEY}&format=json`)}`;
-            const res = await fetch(url);
-            const data = await res.json();
+            const apiUrl = `https://webservice.recruit.co.jp/hotpepper/large_area/v1/?key=${API_KEY}&format=json`;
+            const text = await fetchViaProxy(apiUrl);
+            const data = JSON.parse(text);
             if (data.results && data.results.large_area) {
                 largeAreas = data.results.large_area;
             }
@@ -190,9 +209,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (middleAreasByLarge[largeAreaCode]) return middleAreasByLarge[largeAreaCode];
 
         try {
-            const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://webservice.recruit.co.jp/hotpepper/middle_area/v1/?key=${API_KEY}&large_area=${largeAreaCode}&count=100&format=json`)}`;
-            const res = await fetch(url);
-            const data = await res.json();
+            const apiUrl = `https://webservice.recruit.co.jp/hotpepper/middle_area/v1/?key=${API_KEY}&large_area=${largeAreaCode}&count=100&format=json`;
+            const text = await fetchViaProxy(apiUrl);
+            const data = JSON.parse(text);
             if (data.results && data.results.middle_area) {
                 middleAreasByLarge[largeAreaCode] = data.results.middle_area;
                 // Add to dictionary for instant search mapping
@@ -420,13 +439,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const count = 100;
             const baseUrl = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${API_KEY}&format=json${areaQueryParam}${finalKeywordParam}${advancedParams}&lunch=1&count=${count}`;
 
-            // Proxy via allorigins
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(baseUrl)}`;
-
-            const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('NETWORK_ERROR');
-
-            const data = await response.json();
+            // Use dual-proxy helper for reliability
+            const text = await fetchViaProxy(baseUrl);
+            const data = JSON.parse(text);
 
             // ─── HotPepper API Error Handling (HTTP 200 but error in body) ───
             if (data.results && data.results.error) {
