@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gourmet Lunch Finder</title>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="ph-fill ph-bowl-food" style="color: var(--primary);"></i>
+                    <h1>Lunch<span class="highlight">Finder</span></h1>
+                </div>
+                <nav class="nav-links">
+                    <button class="nav-btn active" data-tab="search"><i class="ph ph-magnifying-glass"></i> さがす</button>
+                    <button class="nav-btn" data-tab="stock"><i class="ph ph-bookmark-simple"></i> ストック <span
+                            id="stock-count" class="badge">0</span></button>
+                </nav>
+            </div>
+        </header>
+
+        <main>
+            <!-- Search Tab -->
+            <section id="tab-search" class="tab-content active">
+                <div class="hero-section">
+                    <h2>今日のランチ、どこにする？</h2>
+                    <p>美味しいランチスポットをサクッと見つけて、最高の昼休みを。</p>
+
+                    <div class="search-box glass-panel">
+                        <div class="location-row">
+                            <div class="input-group" style="flex-grow: 1; margin-bottom: 0;">
+                                <i class="ph ph-map-pin"></i>
+                                <input type="text" id="location-input" placeholder="場所 (例: 新宿、横浜)" autocomplete="off">
+                            </div>
+                            <button id="area-select-btn" class="secondary-btn"
+                                style="flex-shrink: 0; white-space: nowrap;"><i class="ph ph-map-trifold"></i>
+                                エリア選択</button>
+                        </div>
+                        <div class="input-group">
+                            <i class="ph ph-list-magnifying-glass"></i>
+                            <input type="text" id="keyword-input" placeholder="条件 (例: 和食、個室)" autocomplete="off">
+                        </div>
+
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label><i class="ph ph-coin"></i> ランチ予算</label>
+                                <select id="lunch-budget-select">
+                                    <option value="">指定なし</option>
+                                    <option value="500">〜500円</option>
+                                    <option value="1000">〜1,000円</option>
+                                    <option value="1500">〜1,500円</option>
+                                    <option value="2000">〜2,000円</option>
+                                    <option value="3000">〜3,000円</option>
+                                    <option value="5000">プチ贅沢 (3,000円以上)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Filters Toggle -->
+                        <div class="advanced-toggle-wrapper">
+                            <button id="advanced-toggle-btn" type="button" class="advanced-toggle-btn">
+                                <i class="ph ph-sliders-horizontal"></i> こだわり条件
+                                <i class="ph ph-caret-down toggle-arrow"></i>
+                            </button>
+                        </div>
+
+                        <div id="advanced-filters" class="advanced-filters hidden">
+                            <div class="filter-group" style="margin-bottom: 1rem; text-align: left;">
+                                <label><i class="ph ph-fork-knife"></i> ジャンル指定</label>
+                                <select id="genre-select">
+                                    <option value="">すべて</option>
+                                    <option value="G001">居酒屋</option>
+                                    <option value="G002">ダイニングバー・バル</option>
+                                    <option value="G003">創作料理</option>
+                                    <option value="G004">和食</option>
+                                    <option value="G005">洋食</option>
+                                    <option value="G006">イタリアン・フレンチ</option>
+                                    <option value="G007">中華</option>
+                                    <option value="G008">焼肉・ホルモン</option>
+                                    <option value="G017">韓国料理</option>
+                                    <option value="G009">アジア・エスニック料理</option>
+                                    <option value="G010">各国料理</option>
+                                    <option value="G011">カラオケ・パーティ</option>
+                                    <option value="G012">バー・カクテル</option>
+                                    <option value="G013">ラーメン</option>
+                                    <option value="G016">お好み焼き・もんじゃ</option>
+                                    <option value="G014">カフェ・スイーツ</option>
+                                    <option value="G015">その他グルメ</option>
+                                </select>
+                            </div>
+                            <div class="chip-group">
+                                <label class="chip-label">
+                                    <input type="checkbox" id="filter-private-room" value="1"> <i
+                                        class="ph ph-door"></i> 個室あり
+                                </label>
+                                <label class="chip-label">
+                                    <input type="checkbox" id="filter-wifi" value="1"> <i class="ph ph-wifi-high"></i>
+                                    Wi-Fiあり
+                                </label>
+                                <label class="chip-label">
+                                    <input type="checkbox" id="filter-free-drink" value="1"> <i
+                                        class="ph ph-beer-stein"></i> 飲み放題
+                                </label>
+                                <label class="chip-label">
+                                    <input type="checkbox" id="filter-free-food" value="1"> <i
+                                        class="ph ph-bowl-food"></i> 食べ放題
+                                </label>
+                                <label class="chip-label">
+                                    <input type="checkbox" id="filter-parking" value="1"> <i class="ph ph-car"></i>
+                                    駐車場あり
+                                </label>
+                                <label class="chip-label">
+                                    <input type="checkbox" id="filter-card" value="1"> <i class="ph ph-credit-card"></i>
+                                    カード可
+                                </label>
+                                <label class="chip-label">
+                                    <input type="checkbox" id="filter-non-smoking" value="1"> <i
+                                        class="ph ph-prohibit"></i> 禁煙席あり
+                                </label>
+                                <label class="chip-label">
+                                    <input type="checkbox" id="filter-pet" value="1"> <i class="ph ph-paw-print"></i>
+                                    ペット可
+                                </label>
+                            </div>
+                        </div>
+
+                        <button id="search-btn" class="primary-btn pulse-anim">
+                            <i class="ph ph-magnifying-glass"></i> ランチを検索
+                        </button>
+                    </div>
+
+                </div>
+    </div>
+
+    <div class="results-section">
+        <div id="results-header" class="hidden">
+            <h3><i class="ph ph-sparkle"></i> 検索結果 <span id="result-count">0</span>件</h3>
+            <p class="search-notice">※ランチ営業がある店舗のみを表示しています。</p>
+        </div>
+
+        <div id="loading-indicator" class="hidden">
+            <div class="spinner"></div>
+            <p>美味しいお店を探しています...</p>
+        </div>
+
+        <div id="results-grid" class="restaurant-grid">
+            <!-- Search results will be injected here -->
+        </div>
+
+        <div id="empty-search-state" class="empty-state">
+            <i class="ph ph-magnifying-glass"
+                style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+            <p>条件を指定して検索してください</p>
+        </div>
+    </div>
+    </section>
+
+    <!-- Stock Tab -->
+    <section id="tab-stock" class="tab-content">
+        <div class="section-header">
+            <h2><i class="ph ph-bookmark-simple"></i> ストックしたお店</h2>
+            <p>気になるお店を保存して、個別にメモを残せます。</p>
+        </div>
+
+        <div id="stock-grid" class="restaurant-grid">
+            <!-- Stocked restaurants will be injected here -->
+        </div>
+
+        <div id="empty-stock-state" class="empty-state hidden">
+            <div class="empty-illustration">
+                <i class="ph ph-bookmarks"></i>
+            </div>
+            <h3>まだストックがありません</h3>
+            <p>検索画面で見つけた気になるお店を保存しておきましょう！</p>
+            <button class="secondary-btn go-search-btn">お店を探す</button>
+        </div>
+    </section>
+    </main>
+
+    <footer style="margin-top: 3rem; text-align: center; padding: 2rem 0; border-top: 1px solid rgba(0,0,0,0.05);">
+        <a href="http://webservice.recruit.co.jp/" target="_blank">
+            <img src="http://webservice.recruit.co.jp/banner/hotpepper-s.gif" alt="ホットペッパーグルメ Webサービス" width="135"
+                height="17" border="0" title="ホットペッパーグルメ Webサービス">
+        </a>
+    </footer>
+    </div>
+
+    <!-- Area Selection Modal -->
+    <div id="area-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel"
+            style="max-width: 600px; width: 90%; max-height: 80vh; display: flex; flex-direction: column;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 1rem;">
+                <h3 id="area-modal-title" style="font-size: 1.25rem;"><i class="ph ph-map-trifold"></i> エリアを選択</h3>
+                <button id="close-area-modal-btn" class="icon-btn"
+                    style="font-size: 1.5rem; color: var(--text-muted); background: none; border: none; cursor: pointer;"><i
+                        class="ph ph-x"></i></button>
+            </div>
+
+            <div id="area-modal-body" style="overflow-y: auto; flex-grow: 1; padding: 0.5rem;">
+                <!-- Inject Area Buttons Here -->
+                <div id="area-loading" class="hidden" style="text-align: center; padding: 2rem;">
+                    <div class="spinner"></div>
+                    <p>エリア情報を取得中...</p>
+                </div>
+                <div id="area-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.8rem;">
+                </div>
+            </div>
+
+            <div id="area-modal-footer" class="hidden"
+                style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.1); text-align: left;">
+                <button id="area-back-btn" class="secondary-btn"><i class="ph ph-arrow-left"></i> 戻る</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container for Notifications -->
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
