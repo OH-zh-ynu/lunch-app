@@ -66,12 +66,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 const shopId = el.dataset.shopId;
                 // Check cache first
                 if (shopId in budgetCache) {
-                    if (budgetCache[shopId]) {
-                        el.querySelector('.budget-value').textContent = `ランチ予算: ${budgetCache[shopId]}`;
-                        el.style.display = 'flex';
-                    } else {
-                        el.style.display = 'none';
+                    const cacheData = budgetCache[shopId];
+                    if (cacheData && cacheData.budget) {
+                        const bVal = el.querySelector('.budget-value');
+                        if (bVal) bVal.textContent = `ランチ予算: ${cacheData.budget}`;
+                    } else if (cacheData && cacheData.budget === null) {
+                        // If we scraped and found no budget, remove the "取得中..." text but keep existing text if any
+                        const bVal = el.querySelector('.budget-value');
+                        if (bVal && bVal.textContent.includes('取得中')) {
+                            bVal.textContent = 'ランチ: (詳細不明)';
+                        }
                     }
+
+                    if (cacheData && cacheData.update) {
+                        const card = el.closest('.rest-card');
+                        const uVal = card ? card.querySelector('.update-date-value') : null;
+                        if (uVal) uVal.textContent = cacheData.update;
+                    } else {
+                        const card = el.closest('.rest-card');
+                        const uVal = card ? card.querySelector('.update-date-value') : null;
+                        if (uVal && uVal.textContent.includes('取得中')) uVal.textContent = '';
+                    }
+                    el.style.display = 'flex';
                 } else {
                     enqueueScrape(el);
                 }
@@ -112,19 +128,42 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!html) throw new Error('All proxies failed');
 
             // Extract budget string using regex
-            const match = html.match(/shopInfoBudgetLunch[^>]*>([^<]+)</)
+            const matchBudget = html.match(/shopInfoBudgetLunch[^>]*>([^<]+)</)
                 || html.match(/BudgetLunch[^>]*>([^<]+)</);
-            if (match && match[1] && match[1].trim()) {
-                const budgetStr = match[1].trim();
-                budgetCache[shopId] = budgetStr;
-                el.querySelector('.budget-value').textContent = `ランチ予算: ${budgetStr}`;
+            const budgetStr = (matchBudget && matchBudget[1] && matchBudget[1].trim()) ? matchBudget[1].trim() : null;
+
+            // Extract update date using regex
+            const matchUpdate = html.match(/<p class="updateDateText">([^<]+)<\/p>/);
+            const updateStr = (matchUpdate && matchUpdate[1] && matchUpdate[1].trim()) ? matchUpdate[1].trim() : null;
+
+            budgetCache[shopId] = { budget: budgetStr, update: updateStr };
+
+            if (budgetStr) {
+                const bVal = el.querySelector('.budget-value');
+                if (bVal) bVal.textContent = `ランチ予算: ${budgetStr}`;
             } else {
-                budgetCache[shopId] = null;
-                el.style.display = 'none';
+                const bVal = el.querySelector('.budget-value');
+                if (bVal && bVal.textContent.includes('取得中')) {
+                    bVal.textContent = 'ランチ: (詳細不明)';
+                }
             }
+
+            const card = el.closest('.rest-card');
+            if (updateStr) {
+                const uVal = card ? card.querySelector('.update-date-value') : null;
+                if (uVal) uVal.textContent = updateStr;
+            } else {
+                const uVal = card ? card.querySelector('.update-date-value') : null;
+                if (uVal && uVal.textContent.includes('取得中')) uVal.textContent = '';
+            }
+
         } catch (e) {
-            budgetCache[shopId] = null;
-            el.style.display = 'none';
+            budgetCache[shopId] = { budget: null, update: null };
+            const bVal = el.querySelector('.budget-value');
+            if (bVal && bVal.textContent.includes('取得中')) bVal.textContent = 'ランチ予算取得失敗';
+            const card = el.closest('.rest-card');
+            const uVal = card ? card.querySelector('.update-date-value') : null;
+            if (uVal) uVal.textContent = '';
         }
     }
 
@@ -593,14 +632,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const lunchNumbers = lunchText.match(/\d+(?:,\d+)?/g);
         if (lunchNumbers) {
             lunchBudgetHtml = `
-                    <div class="info-row">
+                    <div class="info-row scraped-lunch-budget" data-shop-id="${shop.id}">
                         <i class="ph ph-wallet"></i>
-                        <span style="font-weight: 500;">ランチ予算目安: ${lunchNumbers[0]}円〜</span>
+                        <span class="budget-value" style="font-weight: 500;">ランチ予算目安: ${lunchNumbers[0]}円〜</span>
                     </div>`;
         } else {
             // Setup placeholder for scraping if no upfront price is found
             lunchBudgetHtml = `
-                    <div class="info-row scraped-lunch-budget" data-shop-id="${shop.id}" style="display: flex;">
+                    <div class="info-row scraped-lunch-budget" data-shop-id="${shop.id}">
                         <i class="ph ph-wallet"></i>
                         <span class="budget-value" style="font-weight: 500; color: var(--text-muted); font-size: 0.8rem;">ランチ予算取得中...</span>
                     </div>`;
@@ -626,10 +665,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i class="ph ph-map-pin"></i>
                         <span>${shop.mobile_access || shop.access || 'アクセス情報なし'}</span>
                     </div>
-                    <div class="info-row lunch-highlight">
-                        <i class="ph-fill ph-sun"></i>
-                        <span>ランチ営業: ${lunchText}</span>
-                    </div>
                     ${lunchBudgetHtml}
                     <div class="info-row">
                         <i class="ph ph-calendar-x"></i>
@@ -645,6 +680,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <a href="${lunchMenuUrl}" target="_blank" class="lunch-menu-btn">
                         <i class="ph ph-book-open"></i> ランチメニュー・詳細
                     </a>
+                </div>
+
+                <div style="text-align: right; margin-top: 0.5rem;">
+                     <span class="update-date-value" style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.7;">更新日取得中...</span>
                 </div>
 
                 ${isStockView ? `
