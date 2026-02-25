@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchViaProxy(targetUrl) {
         const proxies = [
             `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
         ];
         for (const proxyUrl of proxies) {
             try {
@@ -516,12 +517,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Search error:', error);
             let msg = '検索中にエラーが発生しました。';
-            if (error.message === 'NETWORK_ERROR') {
-                msg = '通信エラーが発生しました。インターネット接続を確認し、再試行してください。';
+
+            if (error.message.includes('All proxies failed')) {
+                msg = 'API通信がブロックされました。BraveブラウザのShieldや、uBlock Origin等の広告プロッカーをオフにして再試行してください。';
+            } else if (error.message === 'NETWORK_ERROR' || (error.name === 'TypeError' && error.message.includes('Failed to fetch'))) {
+                msg = 'ネットワーク接続に失敗しました、またはAdBlockerにより通信が遮断されています。設定を確認してください。';
             } else if (error.message === 'INVALID_RESPONSE') {
                 msg = 'APIから予期しないレスポンスが返されました。条件を変えて再試行してください。';
-            } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                msg = 'ネットワーク接続に失敗しました。Wi-Fi/モバイル通信を確認してください。';
             } else if (error.name === 'SyntaxError') {
                 msg = '中継サーバーから不正なレスポンスを受信しました。しばらく待ってから再試行してください。';
             }
